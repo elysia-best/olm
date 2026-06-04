@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.8)
 
 project(olm VERSION 3.2.16 LANGUAGES CXX C)
 
