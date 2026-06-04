@@ -29,6 +29,9 @@ DEVELOP = os.environ.get("DEVELOP")
 compile_args = ["-Ilibolm/include"]
 link_args = []
 
+if os.name == "nt":
+    compile_args.append("/permissive")
+
 if DEVELOP and DEVELOP.lower() in ["yes", "true", "1"]:
     link_args.append('-Wl,-rpath=../build')
 
@@ -68,56 +71,17 @@ ffibuilder.set_source(
     source_extension=".cpp", # we need to link the C++ standard library, so use a C++ extension
 )
 
-# Run C preprocessor on the headers to resolve #ifdef, #define, #include etc.
-# that cffi's cdef parser cannot handle.
-preprocess_input = (
-    '#define OLM_STATIC_DEFINE\n'
-    '#include "olm/olm.h"\n'
-    '#include "olm/pk.h"\n'
-    '#include "olm/sas.h"\n'
-)
+with open(os.path.join(PATH, "interface-include/olm/error.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
 
+with open(os.path.join(PATH, "interface-include/olm/olm.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
 
-def _find_cc():
-    """Find a working C compiler for preprocessing headers."""
-    for cc in ["cc", "gcc", "clang"]:
-        try:
-            subprocess.run([cc, "--version"], capture_output=True, check=True)
-            return cc
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            continue
-    raise RuntimeError("No working C compiler found (tried cc, gcc, clang)")
+with open(os.path.join(PATH, "interface-include/olm/pk.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
 
-
-def _strip_attributes(text):
-    """Strip GCC/Clang __attribute__((...)) with support for nested parens."""
-    MATCH_LIST=[
-        "__attribute__((__aligned__(__alignof__(long long))))",
-        "__attribute__((__aligned__(__alignof__(long double))))"
-    ]
-    for match in MATCH_LIST:
-        text = text.replace(match, "")
-    return text
-
-
-def _cpp(preprocess_input, include_dir):
-    """Preprocess a C header string and return cleaned declarations.
-
-    Uses the C preprocessor to expand macros and includes, then strips
-    compiler-specific syntax that cffi's pycparser cannot handle.
-    """
-    cc = _find_cc()
-    result = subprocess.run(
-        [cc, "-E", "-P", f"-I{include_dir}", "-"],
-        input=preprocess_input,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return _strip_attributes(result.stdout)
-
-
-ffibuilder.cdef(_cpp(preprocess_input, os.path.join(PATH, "include")), override=True)
+with open(os.path.join(PATH, "interface-include/olm/sas.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
 
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
