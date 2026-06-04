@@ -3,7 +3,7 @@ requires = ["setuptools", "cffi>=1.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-olm"
+name = "python3-olm"
 version = "3.2.16"
 description = "python CFFI bindings for the olm cryptographic ratchet library"
 authors = [{name = "Damir Jelić", email = "poljar@termina.org.uk"}]
