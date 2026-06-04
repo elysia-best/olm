@@ -97,8 +97,6 @@ def _strip_attributes(text):
     ]
     for match in MATCH_LIST:
         text = text.replace(match, "")
-
-    print(text)
     return text
 
 
