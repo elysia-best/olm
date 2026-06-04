@@ -31,7 +31,7 @@ if DEVELOP and DEVELOP.lower() in ["yes", "true", "1"]:
     link_args.append('-Wl,-rpath=../build')
 
 PARENT_DIR = os.path.abspath(os.path.join(PATH, ".."))
-lib_build = subprocess.Popen("make lib", shell=True, cwd=PARENT_DIR)                                                                                                                
+lib_build = subprocess.Popen("make static", shell=True, cwd=PARENT_DIR)                                                                                                                
 lib_build.wait()
 headers_build = subprocess.Popen("make headers", shell=True)
 headers_build.wait()
