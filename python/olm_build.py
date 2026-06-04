@@ -38,7 +38,7 @@ if DEVELOP and DEVELOP.lower() in ["yes", "true", "1"]:
 # Try to build with cmake first, fall back to GNU make
 try:
     subprocess.run(
-        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO"],
+        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release"],
         cwd="libolm", check=True,
     )
     subprocess.run(
@@ -55,6 +55,11 @@ except FileNotFoundError:
         # so give that a try (though this may fail if it isn't GNU make)
         subprocess.run(["make", "static"], cwd="libolm", check=True)
 
+if os.name == "nt":
+    library = os.path.join("libolm", "build") + os.sep + "Release" + os.sep + "olm.lib"
+else:
+    library = os.path.join("libolm", "build") + os.sep + "libolm.a"
+
 ffibuilder.set_source(
     "_libolm",
     r"""
@@ -64,8 +69,8 @@ ffibuilder.set_source(
         #include <olm/pk.h>
         #include <olm/sas.h>
     """,
-    libraries=["olm"],
-    library_dirs=[os.path.join("libolm", "build")],
+    libraries=[library],
+    library_dirs=[os.path.join("libolm", "build"), os.path.join("libolm", "build", "Release")],
     extra_compile_args=compile_args,
     extra_link_args=link_args,
     source_extension=".cpp", # we need to link the C++ standard library, so use a C++ extension
