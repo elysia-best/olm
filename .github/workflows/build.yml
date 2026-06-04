@@ -1,0 +1,82 @@
+name: Build Python Package
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  python-package:
+    name: Python Package Build 
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        os: [ubuntu-24.04, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@v6
+      with:
+        submodules: true
+
+    - name: Install uv and set the Python version
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.16.x'
+
+    - name: Install Linux Depends
+      if: matrix.os == 'ubuntu-24.04'
+      run: |
+        sudo apt update
+        sudo apt install -y patchelf
+        
+    - name: Build Package
+      working-directory: ${{ github.workspace }}/python
+      run: |
+        uv build --wheel
+
+    - name: Fix package platform on Linux
+      if: matrix.os == 'ubuntu-24.04'
+      working-directory: ${{ github.workspace }}/python
+      run: |
+        uv add auditwheel
+        uv run auditwheel repair --plat "manylinux_2_39_x86_64" dist/*.whl -w fix-dist/
+        rm dist/*.whl
+        mv fix-dist/*.whl dist/
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: python-package-${{ matrix.os }}-${{ matrix.python-version }}
+        path: ${{ github.workspace }}/python/dist/*
+        if-no-files-found: 'error'
+        
+  publish:
+    name: Publish
+    needs: python-package
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v8
+      with:
+        path: dist/
+        merge-multiple: true
+
+    - name: Install uv and set the Python version
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0]
+      with:
+        python-version: '3.13'  # The Python version here is not important for publishing
+
+    - name: Publish distribution 📦 to PyPI
+      run: |
+        uv publish dist/*.whl
