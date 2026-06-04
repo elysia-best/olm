@@ -525,3 +525,5 @@ typedef struct OlmUtility OlmUtility;
 // #endif
 
 // #endif /* OLM_H_ */
+
+void *memset(void *s, int c, size_t n);
