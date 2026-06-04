@@ -99,9 +99,9 @@ public:
             return *this;
         }
         T * this_pos = _data;
-        T * const other_pos = other._data;
+        T const * other_pos = other._data;
         while (other_pos != other._end) {
-            *this_pos = *other;
+            *this_pos = *other_pos;
             ++this_pos;
             ++other_pos;
         }
