@@ -14,18 +14,12 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        os: [ubuntu-24.04, ubuntu-22.04-arm, windows-latest, macos-latest, macos-26-intel]
+        os: [ubuntu-24.04, ubuntu-22.04-arm, windows-latest, macos-latest]
         include:
           - os: ubuntu-22.04-arm
             python-platform: "manylinux_2_28_aarch64"
           - os: ubuntu-24.04
             python-platform: "manylinux_2_39_x86_64"
-          - os: macos-latest
-            python-archflags: "-arch arm64"
-            cmake-osx-architectures: "arm64"
-          - os: macos-26-intel
-            python-archflags: "-arch x86_64"
-            cmake-osx-architectures: "x86_64"
     runs-on: ${{ matrix.os }}
     steps:
     - name: Enable symlink in Windows
