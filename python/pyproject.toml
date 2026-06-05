@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python3-olm"
-version = "3.2.19"
+version = "3.2.20"
 description = "python CFFI bindings for the olm cryptographic ratchet library"
 authors = [{name = "Damir Jelić", email = "poljar@termina.org.uk"}]
 license = {text = "Apache-2.0"}
