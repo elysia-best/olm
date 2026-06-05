@@ -100,5 +100,11 @@ with open(os.path.join(PATH, "interface-include/olm/pk.h")) as f:
 with open(os.path.join(PATH, "interface-include/olm/sas.h")) as f:
     ffibuilder.cdef(f.read(), override=True)
 
+with open(os.path.join(PATH, "interface-include/olm/inbound_group_session.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
+
+with open(os.path.join(PATH, "interface-include/olm/outbound_group_session.h")) as f:
+    ffibuilder.cdef(f.read(), override=True)
+
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
