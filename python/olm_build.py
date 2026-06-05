@@ -54,8 +54,19 @@ else:
 
 # Try to build with cmake first, fall back to GNU make
 try:
+    cmake_configure_cmd = [
+        "cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release",
+        f"-DCMAKE_CXX_COMPILER={cxx_compiler}", f"-DCMAKE_C_COMPILER={c_compiler}", "-G", "Ninja"
+    ]
+
+    # Force a single macOS architecture when requested by CI to avoid universal2 wheels.
+    if sys.platform == "darwin":
+        cmake_arch = os.environ.get("CMAKE_OSX_ARCHITECTURES")
+        if cmake_arch:
+            cmake_configure_cmd.append(f"-DCMAKE_OSX_ARCHITECTURES={cmake_arch}")
+
     subprocess.run(
-        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_CXX_COMPILER={cxx_compiler}", f"-DCMAKE_C_COMPILER={c_compiler}", "-G", "Ninja"],
+        cmake_configure_cmd,
         cwd="libolm", check=True,
     )
     subprocess.run(

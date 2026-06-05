@@ -20,6 +20,12 @@ jobs:
             python-platform: "manylinux_2_28_aarch64"
           - os: ubuntu-24.04
             python-platform: "manylinux_2_39_x86_64"
+          - os: macos-latest
+            python-archflags: "-arch arm64"
+            cmake-osx-architectures: "arm64"
+          - os: macos-26-intel
+            python-archflags: "-arch intel"
+            cmake-osx-architectures: "x86_64"
     runs-on: ${{ matrix.os }}
     steps:
     - name: Enable symlink in Windows
@@ -48,6 +54,12 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y patchelf
+
+    - name: Configure macOS wheel architecture
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        echo "ARCHFLAGS=${{ matrix.python-archflags }}" >> "$GITHUB_ENV"
+        echo "CMAKE_OSX_ARCHITECTURES=${{ matrix.cmake-osx-architectures }}" >> "$GITHUB_ENV"
 
     - name: Build Package
       working-directory: ${{ github.workspace }}/python
