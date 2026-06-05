@@ -24,7 +24,7 @@ jobs:
             python-archflags: "-arch arm64"
             cmake-osx-architectures: "arm64"
           - os: macos-26-intel
-            python-archflags: "-arch intel"
+            python-archflags: "-arch x86_64"
             cmake-osx-architectures: "x86_64"
     runs-on: ${{ matrix.os }}
     steps:
