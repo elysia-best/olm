@@ -67,8 +67,6 @@ except FileNotFoundError:
         # so give that a try (though this may fail if it isn't GNU make)
         subprocess.run(["make", "CC=" + c_compiler, "CXX=" + cxx_compiler, "static"], cwd="libolm", check=True)
 
-library = os.path.join("libolm", "build") + os.sep + "libolm.a"
-
 ffibuilder.set_source(
     "_libolm",
     r"""
@@ -78,7 +76,7 @@ ffibuilder.set_source(
         #include <olm/pk.h>
         #include <olm/sas.h>
     """,
-    libraries=[library],
+    libraries=['olm'],
     library_dirs=[os.path.join("libolm", "build"),],
     extra_compile_args=compile_args,
     extra_link_args=link_args,
