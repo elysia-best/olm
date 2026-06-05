@@ -14,9 +14,14 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        os: [ubuntu-24.04, windows-latest, macos-latest]
+        os: [ubuntu-24.04, ubuntu-22.04-arm, windows-latest, macos-latest, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
+    - name: Enable symlink in Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        git config --global core.symlinks true
+
     - name: Checkout Source
       uses: actions/checkout@v6
       with:
@@ -33,13 +38,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2
-      with:
-        cmake-version: '3.16.x'
-
     - name: Install Linux Depends
-      if: matrix.os == 'ubuntu-24.04'
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt update
         sudo apt install -y patchelf
@@ -52,7 +52,7 @@ jobs:
         uv build --wheel
 
     - name: Fix package platform on Linux
-      if: matrix.os == 'ubuntu-24.04'
+      if: startsWith(matrix.os, 'ubuntu')
       working-directory: ${{ github.workspace }}/python
       run: |
         uv add auditwheel

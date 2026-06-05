@@ -16,6 +16,7 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
+import sys
 import re
 import subprocess
 
@@ -29,35 +30,29 @@ DEVELOP = os.environ.get("DEVELOP")
 compile_args = ["-Ilibolm/include"]
 link_args = []
 
-if os.name == "nt":
-    # Detect MinGW: check USE_MINGW env var first, then auto-detect gcc
-    use_mingw = os.environ.get("USE_MINGW", "").lower() in ("yes", "true", "1")
-    if not use_mingw:
-        try:
-            subprocess.run(["gcc", "--version"], capture_output=True, check=True)
-            use_mingw = True
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            pass
-
-    if not use_mingw:
-        compile_args.append("/permissive")
-
 if DEVELOP and DEVELOP.lower() in ["yes", "true", "1"]:
     link_args.append('-Wl,-rpath=../build')
 
+cxx_compiler = "g++"
+c_compiler = "gcc"
+if sys.platform == "win32":
+    cxx_compiler = "x86_64-w64-mingw32-g++"
+    c_compiler = "x86_64-w64-mingw32-gcc"
+elif sys.platform == "linux":
+    cxx_compiler = "g++"
+    c_compiler = "gcc"
+elif sys.platform == "darwin":
+    cxx_compiler = "clang++"
+    c_compiler = "clang"
+else:
+    raise RuntimeError(f"Unsupported platform: {sys.platform}")
+
 # Try to build with cmake first, fall back to GNU make
 try:
-    if os.name == "nt" and use_mingw:
-        subprocess.run(
-            ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO",
-             "-DCMAKE_BUILD_TYPE=Release", "-G", "MinGW Makefiles"],
-            cwd="libolm", check=True,
-        )
-    else:
-        subprocess.run(
-            ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release"],
-            cwd="libolm", check=True,
-        )
+    subprocess.run(
+        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_CXX_COMPILER={cxx_compiler}", f"-DCMAKE_C_COMPILER={c_compiler}"],
+        cwd="libolm", check=True,
+    )
     subprocess.run(
         ["cmake", "--build", "build"],
         cwd="libolm", check=True,
@@ -66,19 +61,13 @@ except FileNotFoundError:
     try:
         # try "gmake" first because some systems have a non-GNU make
         # installed as "make"
-        subprocess.run(["gmake", "static"], cwd="libolm", check=True)
+        subprocess.run(["gmake", "CC=" + c_compiler, "CXX=" + cxx_compiler, "static"], cwd="libolm", check=True)
     except FileNotFoundError:
         # some systems have GNU make installed without the leading "g"
         # so give that a try (though this may fail if it isn't GNU make)
-        subprocess.run(["make", "static"], cwd="libolm", check=True)
+        subprocess.run(["make", "CC=" + c_compiler, "CXX=" + cxx_compiler, "static"], cwd="libolm", check=True)
 
-if os.name == "nt":
-    if use_mingw:
-        library = os.path.join("libolm", "build") + os.sep + "libolm.a"
-    else:
-        library = os.path.join("libolm", "build") + os.sep + "Release" + os.sep + "olm.lib"
-else:
-    library = os.path.join("libolm", "build") + os.sep + "libolm.a"
+library = os.path.join("libolm", "build") + os.sep + "libolm.a"
 
 ffibuilder.set_source(
     "_libolm",
@@ -90,7 +79,7 @@ ffibuilder.set_source(
         #include <olm/sas.h>
     """,
     libraries=[library],
-    library_dirs=[os.path.join("libolm", "build"), os.path.join("libolm", "build", "Release")],
+    library_dirs=[os.path.join("libolm", "build"),],
     extra_compile_args=compile_args,
     extra_link_args=link_args,
     source_extension=".cpp", # we need to link the C++ standard library, so use a C++ extension
