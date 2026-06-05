@@ -30,17 +30,34 @@ compile_args = ["-Ilibolm/include"]
 link_args = []
 
 if os.name == "nt":
-    compile_args.append("/permissive")
+    # Detect MinGW: check USE_MINGW env var first, then auto-detect gcc
+    use_mingw = os.environ.get("USE_MINGW", "").lower() in ("yes", "true", "1")
+    if not use_mingw:
+        try:
+            subprocess.run(["gcc", "--version"], capture_output=True, check=True)
+            use_mingw = True
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            pass
+
+    if not use_mingw:
+        compile_args.append("/permissive")
 
 if DEVELOP and DEVELOP.lower() in ["yes", "true", "1"]:
     link_args.append('-Wl,-rpath=../build')
 
 # Try to build with cmake first, fall back to GNU make
 try:
-    subprocess.run(
-        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release"],
-        cwd="libolm", check=True,
-    )
+    if os.name == "nt" and use_mingw:
+        subprocess.run(
+            ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO",
+             "-DCMAKE_BUILD_TYPE=Release", "-G", "MinGW Makefiles"],
+            cwd="libolm", check=True,
+        )
+    else:
+        subprocess.run(
+            ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release"],
+            cwd="libolm", check=True,
+        )
     subprocess.run(
         ["cmake", "--build", "build"],
         cwd="libolm", check=True,
@@ -56,7 +73,10 @@ except FileNotFoundError:
         subprocess.run(["make", "static"], cwd="libolm", check=True)
 
 if os.name == "nt":
-    library = os.path.join("libolm", "build") + os.sep + "Release" + os.sep + "olm.lib"
+    if use_mingw:
+        library = os.path.join("libolm", "build") + os.sep + "libolm.a"
+    else:
+        library = os.path.join("libolm", "build") + os.sep + "Release" + os.sep + "olm.lib"
 else:
     library = os.path.join("libolm", "build") + os.sep + "libolm.a"
 
