@@ -15,6 +15,11 @@ jobs:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
         os: [ubuntu-24.04, ubuntu-22.04-arm, windows-latest, macos-latest, macos-26-intel]
+        include:
+          - os: ubuntu-22.04-arm
+            python-platform: "manylinux_2_28_aarch64"
+          - os: ubuntu-24.04
+            python-platform: "manylinux_2_39_x86_64"
     runs-on: ${{ matrix.os }}
     steps:
     - name: Enable symlink in Windows
@@ -46,8 +51,6 @@ jobs:
 
     - name: Build Package
       working-directory: ${{ github.workspace }}/python
-      env:
-        USE_MINGW: 'yes'
       run: |
         uv build --wheel
 
@@ -56,12 +59,7 @@ jobs:
       working-directory: ${{ github.workspace }}/python
       run: |
         uv add auditwheel
-        if ${{ matrix.os }} == 'ubuntu-22.04-arm'; then
-          PLAT="manylinux_2_28_aarch64"
-        else
-          PLAT="manylinux_2_39_x86_64"
-        fi
-        uv run auditwheel repair --plat $PLAT dist/*.whl -w fix-dist/
+        uv run auditwheel repair --plat ${{ matrix.python-platform }} dist/*.whl -w fix-dist/
         rm dist/*.whl
         mv fix-dist/*.whl dist/
 

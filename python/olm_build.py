@@ -50,7 +50,7 @@ else:
 # Try to build with cmake first, fall back to GNU make
 try:
     subprocess.run(
-        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_CXX_COMPILER={cxx_compiler}", f"-DCMAKE_C_COMPILER={c_compiler}"],
+        ["cmake", ".", "-Bbuild", "-DBUILD_SHARED_LIBS=NO", "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_CXX_COMPILER={cxx_compiler}", f"-DCMAKE_C_COMPILER={c_compiler}", "-G", "Ninja"],
         cwd="libolm", check=True,
     )
     subprocess.run(
