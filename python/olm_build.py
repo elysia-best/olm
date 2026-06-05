@@ -38,6 +38,11 @@ c_compiler = "gcc"
 if sys.platform == "win32":
     cxx_compiler = "x86_64-w64-mingw32-g++"
     c_compiler = "x86_64-w64-mingw32-gcc"
+    # Force setuptools/distutils to use MinGW instead of MSVC for the
+    # Python extension compilation step (cffi generates a .cpp file).
+    os.environ.setdefault("CC", c_compiler)
+    os.environ.setdefault("CXX", cxx_compiler)
+    os.environ.setdefault("LDSHARED", cxx_compiler + " -shared -static-libgcc -static-libstdc++")
 elif sys.platform == "linux":
     cxx_compiler = "g++"
     c_compiler = "gcc"
